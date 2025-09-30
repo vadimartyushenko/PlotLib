@@ -13,7 +13,7 @@ def parse_log_file(filename):
     """Парсинг файла лога и извлечение данных об ордерах и позициях"""
 
     # Регулярные выражения для извлечения данных
-    order_pattern = r'(\w+)\s*:\s*size\s*([-\d.]+),\s*price\s*(\d+),\s*position\s*([-\d.]+),\s*(\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}:\d{2}\.\d+)'
+    order_pattern = r'(\w+)\s*:\s*size\s*([-\d.]+),\s*price\s*(\d+),\s*position\s*([-\d.]+)(?:,\s*alpha\s*([-\d.]+))?,\s*(\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}:\d{2}\.\d+)'
 
     orders_data = []
 
@@ -25,7 +25,7 @@ def parse_log_file(filename):
 
             match = re.search(order_pattern, line)
             if match:
-                event_type, size, price, position, timestamp = match.groups()
+                event_type, size, price, position, alpha, timestamp = match.groups()
 
                 # Преобразуем timestamp в datetime объект
                 dt = datetime.strptime(timestamp, '%d-%m-%Y %H:%M:%S.%f')
@@ -34,6 +34,7 @@ def parse_log_file(filename):
                 size = float(size)
                 position = float(position)
                 price = float(price)
+                alpha = float(alpha) if alpha else None
 
                 orders_data.append({
                     'timestamp': dt,
@@ -41,6 +42,7 @@ def parse_log_file(filename):
                     'size': size,
                     'price': price,
                     'position': position,
+                    'alpha': alpha,
                     'filename': os.path.basename(filename)
                 })
 
@@ -90,7 +92,7 @@ def plot_positions_separate_figure(df_list, filenames):
                         point_markers.append('v')
 
                 # Размер точки пропорционален объему сделки
-                point_sizes.append(abs(event['size']) * 20)
+                point_sizes.append(abs(event['size']) * 1)
 
             # Рисуем точки для каждого маркера отдельно
             for marker in set(point_markers):
